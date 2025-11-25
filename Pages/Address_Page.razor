@@ -1,0 +1,102 @@
+﻿@page "/save-address"
+<PageTitle>Address</PageTitle>
+
+
+<div class="container mt-4">
+    <h2 class="fw-bold text-center mb-4" style="font-size: 40px;">Add Delivery Address</h2>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            <div class="card shadow-lg rounded-4 p-4">
+                <div class="card-body">
+
+                    <!-- NAME -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Full Name</label>
+                        <input class="form-control form-control-lg" @bind="AddressModel.Name" placeholder="Enter your full name" />
+                    </div>
+
+                    <!-- MOBILE -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mobile Number</label>
+                        <input class="form-control form-control-lg" @bind="AddressModel.Mobile" maxlength="10" placeholder="Enter mobile number" />
+                    </div>
+
+                    <!-- ADDRESS -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Full Address</label>
+                        <textarea class="form-control form-control-lg" rows="3" @bind="AddressModel.FullAddress" placeholder="House No, Street, Area"></textarea>
+                    </div>
+
+                    <!-- CITY -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">City</label>
+                        <input class="form-control form-control-lg" @bind="AddressModel.City" placeholder="Enter your city" />
+                    </div>
+
+                    <!-- STATE -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">State</label>
+                        <input class="form-control form-control-lg" @bind="AddressModel.State" placeholder="Enter your state" />
+                    </div>
+
+                    <!-- PINCODE -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Pin Code</label>
+                        <input class="form-control form-control-lg" @bind="AddressModel.PinCode" maxlength="6" placeholder="Enter 6 digit pin code" />
+                    </div>
+
+                    <!-- BUTTONS -->
+                    <div class="mt-4 d-flex justify-content-between">
+                        <button class="btn btn-outline-secondary px-4" @onclick="GoBack">
+                            <i class="fa fa-arrow-left"></i> Back
+                        </button>
+
+                        <button class="btn btn-danger px-4" @onclick="SaveAddress">
+                            <i class="fa fa-save"></i> Save Address
+                        </button>
+                    </div>
+
+                    <!-- SUCCESS MESSAGE -->
+                    @if (!string.IsNullOrEmpty(Message))
+                    {
+                        <div class="alert alert-success text-center mt-3 fw-bold">
+                            @Message
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private Address AddressModel = new();
+
+    private string Message = "";
+
+    private async Task SaveAddress()
+    {
+        var response = await Http.PostAsJsonAsync("/address/add", AddressModel);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Message = "✔ Address saved successfully!";
+            await Task.Delay(9000);
+            Nav.NavigateTo("/waiting");
+        }
+        else
+        {
+            Message = "❌ Could not save address. Try again.";
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/");
+    }
+
+}

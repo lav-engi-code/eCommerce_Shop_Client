@@ -1,0 +1,99 @@
+﻿<PageTitle>Search Food</PageTitle>
+
+
+<form class="d-flex" @onsubmit="SearchProduct">
+    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" @bind="SearchText">
+    <button class="btn btn-outline-success" type="submit">Search</button>
+</form>
+
+@if (IsSearching)
+{
+    <p class="text-center text-muted">Searching...</p>
+}
+
+@if (FilteredProducts?.Count == 0)
+{
+    <p class="text-center text-danger fw-bold mt-4">No Results Found</p>
+}
+
+@if (FilteredProducts != null && FilteredProducts.Count > 0)
+{
+    <div class="container mt-3">
+
+        @foreach (var prod in FilteredProducts)
+        {
+            <div class="product-list-item shadow-sm mb-3">
+                <img src="@FixBase64(prod.Base64Img)" style="height:70px; object-fit:contain;" class="float-end product-list-img" />
+                <div>
+                    <h5 class="fw-bold mb-1">@prod.Name</h5>
+                    <button class="btn btn-warning fw-bold px-3 py-2 rounded-3"
+                            @onclick="@(() => Nav.NavigateTo($"food/{prod.Id}"))">
+                        Order Now
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+
+@code {
+
+    private List<Product>? AllProducts;
+    private List<Product>? FilteredProducts;
+
+    private string SearchText = "";
+    private bool IsSearching = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AllProducts = await Http.GetFromJsonAsync<List<Product>>("get-food");
+        FilteredProducts = AllProducts;  // default show all
+    }
+
+    private async Task SearchProduct()
+    {
+        IsSearching = true;
+
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            FilteredProducts = AllProducts;
+        }
+        else
+        {
+            FilteredProducts = AllProducts!
+                .Where(p => p.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        IsSearching = false;
+    }
+
+    private string FixBase64(string? base64)
+    {
+        if (string.IsNullOrWhiteSpace(base64))
+            return "";
+
+        base64 = base64.Trim();
+
+        // Remove any incorrect or duplicate prefixes
+        string[] wrongPrefixes =
+        {
+        "data : image/png;base64,",
+        "data:image/png;base64,",
+        "data:image/png;base64",
+        "data:image/PNG;base64,"
+    };
+
+        foreach (var p in wrongPrefixes)
+        {
+            base64 = base64.Replace(p, "", StringComparison.OrdinalIgnoreCase);
+        }
+
+        base64 = base64.Trim();
+
+        // Always return correct PNG Data URI
+        return $"data:image/png;base64,{base64}";
+    }
+
+}

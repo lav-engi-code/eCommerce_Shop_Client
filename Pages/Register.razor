@@ -1,0 +1,99 @@
+﻿@page "/register"
+<PageTitle>New Account</PageTitle>
+
+
+<div class="d-flex justify-content-center align-items-center"
+     style="min-height: 90vh; background:#f9f9f9;">
+
+    <div class="card shadow-lg p-4" style="width: 420px; border-radius: 18px;">
+
+        <h2 class="text-center mb-3" style="font-weight:700;">Create Account</h2>
+        <p class="text-center text-muted mb-4" style="font-size:14px;">
+            Join us and start your journey
+        </p>
+
+        <EditForm Model="@registerModel" OnValidSubmit="@HandleRegister">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <!-- Full Name -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Full Name</label>
+                <InputText @bind-Value="registerModel.FullName"
+                           class="form-control form-control-lg"
+                           placeholder="Enter full name" />
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Email</label>
+                <InputText @bind-Value="registerModel.Email"
+                           class="form-control form-control-lg"
+                           type="email"
+                           placeholder="Enter email address" />
+            </div>
+
+            <!-- Password -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Password</label>
+                <InputText @bind-Value="registerModel.Password"
+                           type="password"
+                           class="form-control form-control-lg"
+                           placeholder="Create password" />
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Confirm Password</label>
+                <InputText @bind-Value="registerModel.ConfirmPassword"
+                           type="password"
+                           class="form-control form-control-lg"
+                           placeholder="Confirm password" />
+            </div>
+
+            <!-- Register Button -->
+            <button type="submit" class="btn btn-dark w-100 py-2 mt-2"
+                    style="border-radius:10px; font-weight:600;">
+                Create Account
+            </button>
+
+        </EditForm>
+
+        <!-- Already have account -->
+        <div class="text-center mt-3">
+            <span style="font-size:14px;">Already have an account?</span>
+            <a href="/login" style="font-size:14px; font-weight:600;">Login here</a>
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+
+
+    RegisterModel registerModel = new();
+
+
+
+    private async Task HandleRegister()
+    {
+        if (registerModel.Password != registerModel.ConfirmPassword)
+        {
+            Console.WriteLine("Passwords do not match.");
+            return;
+        }
+
+        var response = await Http.PostAsJsonAsync("register-user", registerModel);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Nav.NavigateTo("/login");
+        }
+        else
+        {
+            Console.WriteLine("Registration failed.");
+        }
+    }
+
+}

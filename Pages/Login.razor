@@ -1,0 +1,69 @@
+﻿@page "/login"
+<PageTitle>Login</PageTitle>
+
+
+<div class="d-flex justify-content-center align-items-center"
+     style="min-height: 90vh; background:#f9f9f9;">
+
+    <div class="card shadow-lg p-4" style="width: 380px; border-radius: 18px;">
+
+        <h2 class="text-center mb-3" style="font-weight:700;">Welcome Back</h2>
+        <p class="text-center text-muted mb-4" style="font-size:14px;">
+            Sign in to continue
+        </p>
+
+        <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Email</label>
+                <InputText @bind-Value="loginModel.Email" class="form-control form-control-lg"
+                           placeholder="Enter your email" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Password</label>
+                <InputText @bind-Value="loginModel.Password" type="password"
+                           class="form-control form-control-lg" placeholder="Enter your password" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <p class="text-danger text-center">@errorMessage</p>
+            }
+
+            <button type="submit" class="btn btn-dark w-100 py-2 mt-2"
+                    style="border-radius:10px; font-weight:600;">
+                Login
+            </button>
+        </EditForm>
+
+        <div class="text-center mt-2">
+            <span style="font-size:14px;">New here?</span>
+            <a href="/register" style="font-size:14px; font-weight:600;">Create Account</a>
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+
+    LoginModel loginModel = new();
+    string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        var response = await Http.PostAsJsonAsync("loginag", loginModel);
+        string result = await response.Content.ReadAsStringAsync();
+
+        if (result == "\"ok\"" || result == "ok")
+        {
+            Nav.NavigateTo("/");
+        }
+        else
+        {
+            errorMessage = result;
+        }
+    }
+}

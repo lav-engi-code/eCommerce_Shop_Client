@@ -1,0 +1,63 @@
+﻿@page "/admin"
+<PageTitle>Admin Login</PageTitle>
+
+
+<h2 class="text-center mt-4 fw-bold">Admin Panel Login</h2>
+
+<div class="d-flex justify-content-center mt-4">
+    <div class="card shadow p-4" style="width:380px; border-radius:15px;">
+
+        <EditForm Model="@loginModel" OnValidSubmit="@HandleAdminLogin">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Admin Username</label>
+                <InputText @bind-Value="loginModel.Admin_UserName"
+                           class="form-control form-control-lg"
+                           placeholder="Enter username" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Password</label>
+                <InputText @bind-Value="loginModel.Admin_Password"
+                           type="password"
+                           class="form-control form-control-lg"
+                           placeholder="Enter password" />
+            </div>
+
+            <button class="btn btn-dark w-100 py-2 mt-2 fw-bold">
+                Login
+            </button>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <p class="text-danger mt-3 text-center fw-bold">@ErrorMessage</p>
+            }
+
+        </EditForm>
+
+    </div>
+</div>
+
+
+@code {
+
+    // using your modal
+    Admin loginModel = new();
+
+    string ErrorMessage = "";
+
+    private void HandleAdminLogin()
+    {
+        // Hardcoded admin login verification
+        if (loginModel.Admin_UserName == "Satish" &&
+            loginModel.Admin_Password == "Mumbai@123")
+        {
+            Nav.NavigateTo("/admin-dashboard"); // ⬅ redirect after login
+        }
+        else
+        {
+            ErrorMessage = "Invalid Admin Credentials!";
+        }
+    }
+}

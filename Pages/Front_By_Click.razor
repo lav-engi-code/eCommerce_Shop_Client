@@ -1,0 +1,166 @@
+﻿@page "/food/{id:int}"
+<PageTitle>Food</PageTitle>
+
+
+@if (SelectedProduct == null)
+{
+    <div style="margin-top:15%">
+        <div class="loader-container">
+            <div class="cube-loader"></div>
+            <br />
+        </div>
+        <div class="text-center text-secondary fw-bold mt-4">Bringing Your Fabulous Selection</div>
+    </div>
+}
+else if (SelectedProduct == null)
+{
+    <div class="text-center mt-5">
+        <p class="text-danger">Product not found.</p>
+    </div>
+}
+else
+{
+    <div class="container mt-4">
+        <div class="row align-items-center">
+
+            <!-- IMAGE SECTION -->
+            <div class="col-md-5 text-center">
+                <img src="@FixBase64(SelectedProduct.Base64Img)"
+                     class="img-fluid rounded shadow"
+                     style="max-height: 380px; object-fit: cover;" />
+            </div>
+
+            <!-- PRODUCT DETAILS -->
+            <div class="col-md-7">
+                <h1 class="fw-bold display-4" style="font-family:Impact;">
+                    @SelectedProduct.Name
+                    <sup>
+                        <span class="badge bg-primary fs-6">
+                            @SelectedProduct.Price
+                        </span>
+
+                        <span class="position-relative">
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger px-2 py-1"
+                                  style="font-size: 0.65rem;">
+                                @((SelectedProduct.Quantity - 1) > 0 ? $"{SelectedProduct.Quantity - 1}+" : SelectedProduct.Quantity)
+                            </span>
+                        </span>
+                    </sup>
+                </h1>
+
+                <!-- DESCRIPTION -->
+                <ul class="text-muted fs-5 w-75" style="font-family:Cambria;">
+                    @foreach (var line in SelectedProduct.Description.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        <li>@line.Trim()</li>
+                    }
+                </ul>
+                @if (!string.IsNullOrEmpty(Message))
+                {
+                    <p class="text-success fw-bold mt-2">@Message</p>
+                }
+                <!-- BUTTONS -->
+                <div class="mt-4">
+                    <button class="btn btn-outline-secondary me-2" @onclick="GoBack">
+                        <i class="fa fa-arrow-left"></i> Back
+                    </button>
+
+                    <button class="btn btn-warning me-2" @onclick="AddToCart">
+                        <i class="fa fa-shopping-cart"></i> Add to Cart
+                    </button>
+
+                    <button class="btn btn-danger" @onclick="PaymentMethod">
+                        <i class="fa fa-cart-plus"></i> Buy Now
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+
+@code {
+    private string Message = "";
+
+    [Parameter] 
+    public int id { get; set; }
+    private Product? SelectedProduct;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SelectedProduct = await Http.GetFromJsonAsync<Product>($"/food/{id}");
+    }
+
+    private string FixBase64(string? base64)
+    {
+        if (string.IsNullOrWhiteSpace(base64))
+            return "";
+
+        base64 = base64.Trim();
+
+        // Remove any incorrect or duplicate prefixes
+        string[] wrongPrefixes =
+        {
+        "data : image/png;base64,",
+        "data:image/png;base64,",
+        "data:image/png;base64",
+        "data:image/PNG;base64,"
+    };
+
+        foreach (var p in wrongPrefixes)
+        {
+            base64 = base64.Replace(p, "", StringComparison.OrdinalIgnoreCase);
+        }
+
+        base64 = base64.Trim();
+
+        // Always return correct PNG Data URI
+        return $"data:image/png;base64,{base64}";
+    }
+
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/");
+    }
+    private void PaymentMethod()
+    {
+        Nav.NavigateTo("/save-address");
+    }
+
+
+
+
+    private async Task AddToCart()
+    {
+        if (SelectedProduct == null)
+            return;
+
+        var cartItem = new Product
+        {
+            Name = SelectedProduct.Name,
+            Description = SelectedProduct.Description,
+            Price = SelectedProduct.Price,
+            Base64Img = SelectedProduct.Base64Img,
+            Quantity = 1 // default 1 item
+        };
+
+        var response = await Http.PostAsJsonAsync("/cart/add", cartItem);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Message = "✔ Added to cart successfully!";
+        }
+        else
+        {
+            Message = "❌ Failed to add to cart.";
+        }
+
+        await Task.Delay(3000);
+        Message = null;
+        StateHasChanged();
+    }
+
+}

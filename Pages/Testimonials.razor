@@ -1,0 +1,208 @@
+﻿@page "/testimonials"
+<PageTitle>Testimonial</PageTitle>
+
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Customer Testimonials</h2>
+
+    <p class="lead mb-4">
+        Read what our customers say about their experience. These reviews are fetched directly from our database.
+    </p>
+
+    @if (reviews == null)
+    {
+        <div style="margin-top:15%">
+            <div class="loader-container">
+                <div class="cube-loader"></div>
+                <br />
+            </div>
+            <div class="text-center text-secondary fw-bold mt-4">Loading reviews...</div>
+        </div>
+    }
+    else if (!reviews.Any())
+    {
+        <p>No reviews yet. Be the first to write one!</p>
+    }
+    else
+    {
+        @foreach (var r in reviews)
+        {
+            <div class="border rounded p-3 mb-3 position-relative">
+
+                <!-- DELETE BUTTON -->
+                <button class="btn-close position-absolute top-0 end-0 mt-2 me-2"
+                        @onclick="() => DeleteReview(r)">
+                </button>
+
+                @if (editReview == r)
+                {
+                    <!-- EDITING MODE -->
+                    <div>
+                        <label class="fw-bold">Name:</label>
+                        <InputText class="form-control mb-2" @bind-Value="editBuffer.Reviewer_Name" />
+
+                        <label class="fw-bold">Review:</label>
+                        <InputTextArea class="form-control mb-2" rows="3" @bind-Value="editBuffer.Review_Text" />
+
+                        <label class="fw-bold">Rating:</label>
+                        <InputSelect class="form-control mb-2" @bind-Value="editBuffer.Star">
+                            <option value="5">⭐⭐⭐⭐⭐</option>
+                            <option value="4">⭐⭐⭐⭐</option>
+                            <option value="3">⭐⭐⭐</option>
+                            <option value="2">⭐⭐</option>
+                            <option value="1">⭐</option>
+                        </InputSelect>
+
+                        <button class="btn btn-success me-2" @onclick="() => SaveEdit(r)">Save</button>
+                        <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                    </div>
+                }
+                else
+                {
+                    <!-- VIEW MODE -->
+                    <h6>@RenderStars(r.Star)</h6>
+                    <p>@r.Review_Text</p>
+                    <p class="mb-0"><strong>- @r.Reviewer_Name</strong></p>
+
+                    <button class="btn btn-sm btn-outline-primary mt-2"
+                            @onclick="() => BeginEdit(r)">
+                        Edit
+                    </button>
+                }
+            </div>
+        }
+    }
+
+    <hr />
+
+    <h5 class="mt-4">Share your experience</h5>
+
+    <EditForm Model="review" OnValidSubmit="SubmitReview">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Your name</label>
+            <InputText class="form-control" placeholder="Full name" @bind-Value="review.Reviewer_Name" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Your review</label>
+            <InputTextArea class="form-control" rows="3" placeholder="Tell us what you liked or how we can improve"
+                           @bind-Value="review.Review_Text" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Rating</label>
+            <InputSelect class="form-control" @bind-Value="review.Star">
+                <option value="5">5 - Excellent</option>
+                <option value="4">4 - Very Good</option>
+                <option value="3">3 - Good</option>
+                <option value="2">2 - Fair</option>
+                <option value="1">1 - Poor</option>
+            </InputSelect>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit Review</button>
+    </EditForm>
+
+    @if (message != null)
+    {
+        <div class="alert alert-success mt-3">@message</div>
+    }
+
+</div>
+
+
+@code {
+    List<Testimonial>? reviews;
+    Testimonial review = new();
+    string? message;
+
+    // Editing state
+    Testimonial? editReview = null;
+    Testimonial editBuffer = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        reviews = await Http.GetFromJsonAsync<List<Testimonial>>("get-review");
+    }
+
+    private string RenderStars(int rating) => new string('⭐', rating);
+
+    /* -------------------- SUBMIT NEW REVIEW -------------------- */
+    private async Task SubmitReview()
+    {
+        var response = await Http.PostAsJsonAsync("add-review", review);
+
+        if (response.IsSuccessStatusCode)
+        {
+            reviews.Add(new Testimonial
+            {
+                Reviewer_Name = review.Reviewer_Name,
+                Review_Text = review.Review_Text,
+                Star = review.Star
+            });
+
+            message = $"Thanks {review.Reviewer_Name}! You rated {review.Star} stars.";
+            review = new Testimonial();
+        }
+        else
+        {
+            message = "Failed to submit review ❌";
+        }
+
+    }
+
+
+    /* -------------------- EDIT REVIEW -------------------- */
+    void BeginEdit(Testimonial r)
+    {
+        editReview = r;
+        editBuffer = new Testimonial
+        {
+            Reviewer_Name = r.Reviewer_Name,
+            Review_Text = r.Review_Text,
+            Star = r.Star
+        };
+    }
+
+    void CancelEdit()
+    {
+        editReview = null;
+        editBuffer = new();
+    }
+
+    async Task SaveEdit(Testimonial original)
+    {
+        var res = await Http.PutAsJsonAsync(
+            $"update-review-by-name/{original.Reviewer_Name}",
+            editBuffer);
+
+        if (res.IsSuccessStatusCode)
+        {
+            original.Reviewer_Name = editBuffer.Reviewer_Name;
+            original.Review_Text = editBuffer.Review_Text;
+            original.Star = editBuffer.Star;
+
+            editReview = null;
+        }
+    }
+
+
+
+    /* -------------------- DELETE REVIEW -------------------- */
+    async Task DeleteReview(Testimonial r)
+    {
+        bool confirm = await js.InvokeAsync<bool>("confirm", $"Delete review by {r.Reviewer_Name}?");
+        if (!confirm) return;
+
+        var response = await Http.DeleteAsync($"delete-review-by-name/{r.Reviewer_Name}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            reviews.Remove(r);
+            StateHasChanged();
+        }
+    }
+}

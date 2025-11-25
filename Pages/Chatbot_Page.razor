@@ -1,0 +1,51 @@
+﻿
+<PageTitle>ChatBot</PageTitle>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Send Message</h5>
+        <div class="form-group">
+            <textarea class="form-control" id="message" @bind="@message"></textarea>
+        </div>
+        <button class="btn btn-primary mt-2" @onclick="Send">Send</button>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <h5 class="card-title">Response</h5>
+        <p>@response</p>
+    </div>
+</div>
+
+
+@code {
+    private string message;
+    private string response;
+
+    private async Task Send()
+    {
+        response = "Loading...";
+        var chatObj = new Chat_Message
+        {
+            Chat = message
+        };
+        try
+        {
+            var result = await Http.PostAsJsonAsync("chat-send", chatObj);
+
+            if (result.IsSuccessStatusCode)
+            {
+                var data = await result.Content.ReadFromJsonAsync<Chat_Message>();
+                response = data.Response;
+            }
+            else
+            {
+                response = $"API ERROR: {result.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            response = $"EXCEPTION: {ex.Message}";
+        }
+    }
+}

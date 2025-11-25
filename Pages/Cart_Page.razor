@@ -1,0 +1,158 @@
+﻿@page "/cart"
+<PageTitle>Cart</PageTitle>
+
+
+@if (IsLoading)
+{
+    <div style="margin-top:15%">
+        <div class="loader-container">
+            <div class="cube-loader"></div>
+            <br />
+        </div>
+        <div class="text-center text-secondary fw-bold mt-4">Cart Loading</div>
+    </div>
+}
+else if (CartItems == null || CartItems.Count == 0)
+{
+    <div class="text-center mt-5">
+        <h5 class="text-muted">Your cart is empty!</h5>
+        <button class="btn btn-primary mt-3" @onclick="GoHome">Shop Now</button>
+    </div>
+}
+else
+{
+    <div class="container">
+        @foreach (var item in CartItems)
+        {
+            <div class="product-list-item shadow-sm mb-3 d-flex p-2 align-items-center"
+                 style="border-radius:8px; border:1px solid #ddd;">
+
+                <img src="@FixBase64(item.Base64Img)"
+                     class="product-list-img"
+                     style="width:110px; height:90px; object-fit:contain;" />
+
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="fw-bold mb-1">@item.Name</h5>
+                    <p class="fw-semibold text-dark mb-1">₹@item.Price</p>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-dark"
+                                @onclick="@(() => UpdateQty(item, -1))">
+                            −
+                        </button>
+
+                        <span class="px-2 fw-bold">@item.Quantity</span>
+
+                        <button class="btn btn-sm btn-dark"
+                                @onclick="@(() => UpdateQty(item, +1))">
+                            +
+                        </button>
+                    </div>
+                </div>
+
+                <button class="btn btn-danger btn-sm"
+                        @onclick="@(() => RemoveItem(item.Id))">
+                    Remove
+                </button>
+            </div>
+        }
+
+        <div class="card p-3 shadow-sm mt-4">
+            <h4 class="fw-bold">Total: ₹@TotalAmount</h4>
+
+            <button class="btn btn-success mt-2 fw-bold px-3 py-2"
+                    @onclick="Checkout">
+                Checkout
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Cart>? CartItems;
+    private bool IsLoading = true;
+    private decimal TotalAmount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCart();
+    }
+
+    private async Task LoadCart()
+    {
+        IsLoading = true;
+
+        CartItems = await Http.GetFromJsonAsync<List<Cart>>("cart/get");
+
+        CalculateTotal();
+
+        IsLoading = false;
+    }
+
+    private void CalculateTotal()
+    {
+        TotalAmount = CartItems?.Sum(i => i.Price * i.Quantity) ?? 0;
+    }
+
+    private async Task UpdateQty(Cart item, int change)
+    {
+        var newQty = item.Quantity + change;
+
+        if (newQty < 1)
+            newQty = 1;
+
+        item.Quantity = newQty;
+
+        // Call updated PUT service
+        await Http.PutAsync($"cart/update-qty/{item.Id}/{newQty}", null);
+
+        CalculateTotal();
+    }
+
+    private async Task RemoveItem(int id)
+    {
+        await Http.DeleteAsync($"cart/remove/{id}");
+
+        CartItems!.RemoveAll(i => i.Id == id);
+
+        CalculateTotal();
+    }
+
+    private void Checkout()
+    {
+        Nav.NavigateTo("/save-address");
+    }
+
+    private void GoHome()
+    {
+        Nav.NavigateTo("/");
+    }
+
+    private string FixBase64(string? base64)
+    {
+        if (string.IsNullOrWhiteSpace(base64))
+            return "";
+
+        base64 = base64.Trim();
+
+        // Remove any incorrect or duplicate prefixes
+        string[] wrongPrefixes =
+        {
+        "data : image/png;base64,",
+        "data:image/png;base64,",
+        "data:image/png;base64",
+        "data:image/PNG;base64,"
+    };
+
+        foreach (var p in wrongPrefixes)
+        {
+            base64 = base64.Replace(p, "", StringComparison.OrdinalIgnoreCase);
+        }
+
+        base64 = base64.Trim();
+
+        // Always return correct PNG Data URI
+        return $"data:image/png;base64,{base64}";
+    }
+
+}
