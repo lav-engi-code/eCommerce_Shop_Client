@@ -3,7 +3,7 @@
 
 <div class="container mt-5">
     <h2 class="text-center fw-bold" style="font-size:32px; font-family:Cambria;">
-        Manage Contacts
+        Feedback Forms
     </h2>
 
     @if (Contacts == null)
@@ -13,7 +13,7 @@
                 <div class="cube-loader"></div>
                 <br />
             </div>
-            <div class="text-center text-secondary fw-bold mt-4">ADMIN - Bringing Contact Forms</div>
+            <div class="text-center text-secondary fw-bold mt-4">ADMIN - Bringing Feedback Forms</div>
         </div>
     }
     else if (!Contacts.Any())
@@ -25,6 +25,7 @@
         <table class="table table-striped table-bordered mt-4">
             <thead class="table-dark">
                 <tr>
+                    <th>Date - Time</th>
                     <th>Full Name</th>
                     <th>Email</th>
                     <th>Phone</th>
@@ -36,6 +37,7 @@
                 @foreach (var contact in Contacts)
                 {
                     <tr>
+                        <td>@contact.Date</td>
                         <td>@contact.Full_Name</td>
                         <td>@contact.Email</td>
                         <td>@contact.Phone</td>
@@ -43,9 +45,9 @@
                             @contact.Message
                         </td>
                         <td>
-                            <button class="btn btn-danger btn-sm"
-                                    @onclick="() => DeleteContact(contact.Phone)">
-                                <i class="fa fa-trash"></i> Delete
+                            <button class="btn btn-info btn-sm"
+                                    @onclick="() => ArchiveContact(contact)">
+                                <i class="fa fa-archive"></i> Archive
                             </button>
                         </td>
                     </tr>
@@ -65,22 +67,27 @@
 
     private async Task LoadContacts()
     {
-        Contacts = await Http.GetFromJsonAsync<List<Contact>>("/get-contact");
+        var contacts = await Http.GetFromJsonAsync<List<Contact>>("/get-contact");
+        Contacts = contacts?.OrderByDescending(c => c.Date).ToList();
     }
 
-    private async Task DeleteContact(string phone)
+    private async Task ArchiveContact(Contact contact)
     {
-        bool confirm = await js.InvokeAsync<bool>("confirm", $"Are you sure you want to delete contact {phone}?");
+        bool confirm = await js.InvokeAsync<bool>("confirm",
+            $"Are you sure you want to archive and delete contact {contact.Full_Name} ({contact.Phone})?");
         if (!confirm) return;
 
-        var response = await Http.DeleteAsync($"/delete-contact/{phone}");
+        // Call the archive & delete endpoint
+        var response = await Http.PostAsJsonAsync("/archive-delete-contact", contact);
+
         if (response.IsSuccessStatusCode)
         {
-            await LoadContacts(); // Refresh the table
+            await LoadContacts(); // Reload the contact list
+            await js.InvokeVoidAsync("alert", "Contact archived and deleted successfully!");
         }
         else
         {
-            await js.InvokeVoidAsync("alert", "Failed to delete contact.");
+            await js.InvokeVoidAsync("alert", "Failed to archive contact.");
         }
     }
 }

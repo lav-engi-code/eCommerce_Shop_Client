@@ -102,7 +102,7 @@
         var response = await Http.DeleteAsync($"delete-food/{id}");
         if (response.IsSuccessStatusCode)
         {
-            await LoadProducts(); // Refresh list
+            await LoadProducts();
         }
         else
         {

@@ -1,122 +1,135 @@
 ﻿@page "/contact"
 <PageTitle>Contact</PageTitle>
 
+<div style="min-height:100vh;" class="contact-page">
 
-<div class="container mt-4">
-    <h2 class="text-center mb-4">Contact Us</h2>
+    <div class="contact-card">
+        <h2 class="contact-title">CONTACT US</h2>
 
-    <p class="lead mb-4">
-        We’re here to help — whether you have a pre-sale question, need help with an order, or want to start a return.
-        Below you’ll find all the ways to reach us plus our typical response times and useful guidance to get faster support.
-    </p>
+        <EditForm Model="contact" OnValidSubmit="SubmitContact">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="mb-4">
-                <h5>Phone Support</h5>
-                <p>
-                    Call us at <strong>+91 9129580499</strong> for urgent issues. Phone support is available Monday–Saturday,
-                    10:00 AM to 6:00 PM IST. If we are unable to answer immediately, please leave a voicemail or use the
-                    contact form below and we will call back during business hours.
-                </p>
-            </div>
+            <label>Your Name *</label>
+            <InputText class="contact-input" @bind-Value="contact.Full_Name" />
+            <label>Your Phone *</label>
+            <InputText class="contact-input" @bind-Value="contact.Phone" />
+            <label>Your Email *</label>
+            <InputText type="email" class="contact-input" @bind-Value="contact.Email" />
 
-            <div class="mb-4">
-                <h5>Email</h5>
-                <p>
-                    For order-related questions and non-urgent inquiries, email us at
-                    <strong>lavkumarvishwakarma9129@gmail.com</strong>. Include your order number in the subject line for faster processing.
-                    We typically respond to emails within 24 hours on business days.
-                </p>
-            </div>
+            <label>How can we help you?</label>
+            <InputTextArea class="contact-textarea" @bind-Value="contact.Message" />
 
-            <div class="mb-4">
-                <h5>Address</h5>
-                <p>
-                    Head office / returns center:<br />
-                    Food Market<br />
-                    Dhanghata, Sant Kabir Nagar, Uttar Pradesh, India<br />
-                    (Use this address for returns when a returns label is not provided.)
-                </p>
-            </div>
+            <button type="submit" class="send-btn">Send Message</button>
+        </EditForm>
 
-            <div class="mb-4">
-                <h5>Business Hours &amp; Response Times</h5>
-                <p>
-                    Our support desk operates Monday–Saturday, 10:00 AM to 6:00 PM IST. For most queries we reply within
-                    24 hours. Orders and shipping questions receive immediate priority and often get a same-day response
-                    during business hours.
-                </p>
-            </div>
-        </div>
+        @if (successMessage != null)
+        {
+            <div class="alert-success-custom">@successMessage</div>
+        }
+    </div>
 
-        <div class="col-md-6">
-            <div class="mb-4">
-                <h5>Quick Contact Form</h5>
-                <p class="small text-muted">Fill this form and our support team will reach out as soon as possible.</p>
+    <div class="contact-info">
+        <h2 class="open-title">WE'RE OPEN</h2>
 
+        <p>All days: 7 am – 11 pm</p>
 
-                <EditForm Model="contact" OnValidSubmit="SubmitContact">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
+        <h5>LOCATIONS</h5>
+        <p>Delhi NCR | Mumbai | Uttar Pradesh</p>
 
-                    <div class="mb-2">
-                        <label class="form-label">Full name</label>
-                        <InputText class="form-control" placeholder="Your name"
-                                   @bind-Value="contact.Full_Name" />
-                    </div>
+        <p>Email: lavkumarvishwakarma9129@gmail.com</p>
+        <p>Contact: +91 XXXXXXXXXX</p>
 
-                    <div class="mb-2">
-                        <label class="form-label">Email (optional)</label>
-                        <InputText type="email" class="form-control" placeholder="you@example.com"
-                                   @bind-Value="contact.Email" />
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label">Phone</label>
-                        <InputText type="tel" class="form-control" placeholder="+91 9XXXXXXXXX"
-                                   @bind-Value="contact.Phone" />
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label">Message</label>
-                        <InputTextArea class="form-control" rows="4"
-                                       placeholder="Tell us about your question or issue"
-                                       @bind-Value="contact.Message" />
-                    </div>
-
-                    <button class="btn btn-primary" type="submit">Send Message</button>
-                </EditForm>
-
-                @if (successMessage != null)
-                {
-                    <div class="alert alert-success mt-3">@successMessage</div>
-                }
-            </div>
-
-            <div class="mt-3">
-                <h6>Social &amp; Community</h6>
-                <p>
-                    Follow us for updates, offers and support: <br />
-                    @* <a href="waiting" class="me-2">Instagram</a> *@
-                    <a href="https://www.facebook.com/Lav.Vishwakarma.str" class="me-2">Facebook</a>
-                    <a href="https://www.linkedin.com/in/lavkumarvishwakarma219a10355/">LinkedIn</a>
-                </p>
-            </div>
+        <div class="social-icons">
+            <i class="bi bi-facebook"></i>
+            <i class="bi bi-instagram"></i>
+            <i class="bi bi-twitter"></i>
         </div>
     </div>
 
-    <hr />
-
-    <div class="mt-3">
-        <h5>Help &amp; Self-Service</h5>
-        <p>
-            For quick answers, check our FAQ or Order Help pages. You can track orders from your account page and initiate
-            returns directly from the order history. These self-service options usually resolve most questions faster than
-            contacting support.
-        </p>
-    </div>
 </div>
+
+<style>
+    .contact-page {
+        display: flex;
+        justify-content: center;
+        gap: 50px;
+        padding: 50px;
+    }
+
+    .contact-card {
+        background: white;
+        padding: 30px;
+        width: 450px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .contact-title {
+        text-align: center;
+        margin-bottom: 20px;
+        font-weight: bold;
+    }
+
+    label {
+        font-weight: 600;
+        margin-top: 12px;
+    }
+
+    .contact-input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+    }
+
+    .row-inputs {
+        display: flex;
+        gap: 15px;
+    }
+
+    .contact-textarea {
+        width: 100%;
+        height: 120px;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
+
+    .send-btn {
+        width: 100%;
+        margin-top: 15px;
+        padding: 12px;
+        background: #ff5c00;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 18px;
+    }
+
+        .send-btn:hover {
+            background: #e65100;
+        }
+
+    .contact-info {
+        margin-left:20%;
+        margin-top:90px;
+        max-width: 350px;
+        padding-top: 20px;
+    }
+
+    .open-title {
+        font-weight: bold;
+    }
+
+    .social-icons i {
+        font-size: 30px;
+        margin-right: 15px;
+        cursor: pointer;
+    }
+
+</style>
 
 @code {
     Contact contact = new Contact();
@@ -131,7 +144,7 @@
             if (response.IsSuccessStatusCode)
             {
                 successMessage = "Your message has been sent successfully! 🎉";
-                contact = new Contact(); 
+                contact = new Contact();
             }
             else
             {
@@ -144,3 +157,4 @@
         }
     }
 }
+<Footer_Page />

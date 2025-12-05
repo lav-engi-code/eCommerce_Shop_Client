@@ -16,6 +16,7 @@
             else if (UploadedFiles.Count == 0)
             {
                 <div class=" alert alert-info">No Product Available</div>
+                <Footer_Page />
             }
             else
             {
@@ -47,8 +48,8 @@
                                                 </div>
                                             </div>
                                             <div class="hstack gap-1 d-flex justify-content-center">
-                                                <button class="btn btn-secondary fw-bold" id="stylebutton" @onclick="@(() => Nav.NavigateTo($"food/{prod.Id}"))"><i class="fa fa-list"></i>Details</button>
-                                                <button class="btn btn-outline-danger fw-bold" id="stylebutton" @onclick="@(() => Nav.NavigateTo("/save-address"))"><i class="fa fa-cart-plus"></i>Buy Now</button>
+                                                <button class="btn btn-secondary fw-bold" id="stylebutton" @onclick="@(() => OpenProduct(prod.Id))"><i class="fa fa-list"></i>Details</button>
+                                                <button class="btn btn-outline-danger fw-bold" id="stylebutton" @onclick="BuyInstant"><i class="fa fa-cart-plus"></i>Buy Now</button>
                                                 <button class="btn btn-success fw-bold"
                                                         @onclick="@(() => AddToCart(prod))">
                                                     <i class="fa fa-shopping-cart"></i> Add to Cart
@@ -108,8 +109,8 @@
                             <p class="fw-semibold text-dark">@prod.Price</p>
 
                             <button class="btn btn-warning fw-bold px-3 py-2 rounded-3 mb-2 w-100"
-                                    @onclick="@(() => Nav.NavigateTo($"food/{prod.Id}"))">
-                                Order Now
+                                    @onclick="@(() => OpenProduct(prod.Id))">
+                                Details
                             </button>
 
                             <button class="btn btn-success fw-bold w-100"
@@ -126,23 +127,38 @@
 
         </div>
     </div>
+    <Footer_Page />
 }
 
-
+@inject CartState CartState
 
 
 @code {
+    private List<Cart>? CartItems;
     private List<Product>? UploadedFiles;
     private string Message = "";
 
     protected override async Task OnInitializedAsync()
     {
         UploadedFiles = await Http.GetFromJsonAsync<List<Product>>("get-food");
+        CartItems = await Http.GetFromJsonAsync<List<Cart>>("cart/get");
+        int totalQty = CartItems.Sum(i => i.Quantity);
+        CartState.SetItems(totalQty);
+    }
+    private void OpenProduct(int productId)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("ProductId", productId);
+
+        model.Show<Front_By_Click>("", parameters);
     }
 
     private async Task AddToCart(Product prod)
     {
         var response = await Http.PostAsJsonAsync("cart/add", prod);
+        var list = await Http.GetFromJsonAsync<List<Cart>>("cart/get");
+        int totalQty = list.Sum(i => i.Quantity);
+        CartState.SetItems(totalQty);
 
         if (response.IsSuccessStatusCode)
         {
@@ -186,6 +202,18 @@
 
         // Always return correct PNG Data URI
         return $"data:image/png;base64,{base64}";
+    }
+
+    private void BuyInstant()
+    {
+        if (LoginState.IsLoggedIn)
+        {
+            Nav.NavigateTo("/save-address");
+        }
+        else
+        {
+            Nav.NavigateTo("/login");
+        }
     }
 
 }

@@ -1,8 +1,17 @@
-﻿<nav class="navbar navbar-expand-lg navbar-light bg-light">
+﻿@inject LoginState LoginState
+
+
+@using eCommerce_Shop_Client.Services
+
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
-        <a class="navbar-brand" href="cart">
-            <i class="fa fa-cart-shopping text-danger"></i>
-        </a>
+        <li class="nav-item">
+            <a class="nav-link" href="/admin">
+                <i class="fa fa-user-shield"></i>
+            </a>
+        </li>
+        <Chatbot />
         <button class="navbar-toggler" type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent"
@@ -31,20 +40,64 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown"
                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Account
+
+                        @if (LoginState.IsLoggedIn)
+                        {
+                            <span>
+                                <i class="fa fa-user"></i> @LoginState.UserName
+                            </span>
+                        }
+                        else
+                        {
+                            <span>Account</span>
+                        }
                     </a>
+
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown" style="font-family:sans-serif">
-                        <li><a class="dropdown-item" href="login">Login</a></li>
-                        <li><hr class="dropdown-divider" /></li>
-                        <li><a class="dropdown-item" href="register">Create Account</a></li>
+
+                        @if (LoginState.IsLoggedIn)
+                        {
+                            @* <li><a class="dropdown-item" href="#">Profile</a></li> *@
+                            <li><a class="dropdown-item" @onclick="Logout">Logout</a></li>
+                        }
+                        else
+                        {
+                            <li><a class="dropdown-item" href="login">Login</a></li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li><a class="dropdown-item" href="register">Create Account</a></li>
+                        }
                     </ul>
                 </li>
+
             </ul>
             <button class="btn btn-none" @onclick="@(() => model.Show<SearchBarLogic>("Search Your Crave"))">
                 <i class="fa fa-magnifying-glass fs-5" style="cursor:pointer"></i>
             </button>
-            <Chatbot />
+            <a class="navbar-brand" href="cart">
+                <i class="fa fa-cart-shopping text-danger"></i>
+                @CartState.TotalItems
+            </a>
         </div>
     </div>
 </nav>
 
+@code {
+    @inject CartState CartState
+    protected override void OnInitialized()
+    {
+        CartState.OnChange += StateHasChanged;
+    }
+    void Logout()
+    {
+        LoginState.IsLoggedIn = false;
+        LoginState.UserEmail = null;
+        LoginState.UserName = null;
+
+        Nav.NavigateTo("/", forceLoad: true);
+    }
+
+    public void Dispose()
+    {
+        CartState.OnChange -= StateHasChanged;
+    }
+}

@@ -42,18 +42,16 @@
 
 @code {
 
-    // using your modal
     Admin loginModel = new();
 
     string ErrorMessage = "";
 
     private void HandleAdminLogin()
     {
-        // Hardcoded admin login verification
-        if (loginModel.Admin_UserName == "Satish" &&
+        if (loginModel.Admin_UserName == "User" &&
             loginModel.Admin_Password == "Mumbai@123")
         {
-            Nav.NavigateTo("/admin-dashboard"); // ⬅ redirect after login
+            Nav.NavigateTo("/admin-dashboard");
         }
         else
         {

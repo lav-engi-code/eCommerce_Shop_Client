@@ -2,7 +2,7 @@
 
 <PageTitle>Add Product</PageTitle>
 
-<div class="container mt-5">
+<div style="min-height:100vh;" class="container mt-5">
 
     <h2 class="text-center fw-bold" style="font-size:40px; font-family: Cambria;">
         Add New Food Item
@@ -125,6 +125,7 @@
 
         messageDialog!.SetDialogValues("success", "Product Added Successfully!");
         SetMessageDialog();
+        Nav.NavigateTo("/admin/products");
     }
 
     async Task UploadImage(InputFileChangeEventArgs e)

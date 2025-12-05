@@ -1,4 +1,6 @@
-﻿@page "/login"
+﻿@inject LoginState LoginState
+
+@page "/login"
 <PageTitle>Login</PageTitle>
 
 
@@ -46,7 +48,7 @@
     </div>
 
 </div>
-
+<Footer_Page/>
 @code {
 
     LoginModel loginModel = new();
@@ -57,8 +59,17 @@
         var response = await Http.PostAsJsonAsync("loginag", loginModel);
         string result = await response.Content.ReadAsStringAsync();
 
-        if (result == "\"ok\"" || result == "ok")
+        // Remove extra quotes returned by API
+        result = result.Replace("\"", "");
+
+        if (result.StartsWith("ok|"))
         {
+            string userName = result.Split('|')[1];
+
+            LoginState.IsLoggedIn = true;
+            LoginState.UserEmail = loginModel.Email;
+            LoginState.UserName = userName;
+
             Nav.NavigateTo("/");
         }
         else
@@ -66,4 +77,5 @@
             errorMessage = result;
         }
     }
+
 }

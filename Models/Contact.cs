@@ -4,6 +4,8 @@ namespace eCommerce_Shop_Client.Models
 {
     public class Contact
     {
+        public DateTime? Date { get; set; }
+
         [Required(ErrorMessage = "Full name is required")]
         public string? Full_Name { get; set; }
         public string? Email { get; set; }

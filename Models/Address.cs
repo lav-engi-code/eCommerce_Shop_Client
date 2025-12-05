@@ -6,6 +6,7 @@ namespace eCommerce_Shop_Client.Models
     {
         public int Id { get; set; }
         [Required]
+        public string? UserEmail { get; set; }
         public string? Name { get; set; }
         [Required]
         public string? Mobile { get; set; }

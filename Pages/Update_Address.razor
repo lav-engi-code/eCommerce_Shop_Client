@@ -1,19 +1,17 @@
-﻿@page "/save-address"
+﻿@page "/edit-address/{Id:int}"
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject LoginState LoginState
 
-<PageTitle>Add Address</PageTitle>
+<PageTitle>Edit Address</PageTitle>
 
 <div class="container mt-4" style="min-height:100vh;">
+    <h2 class="fw-bold text-center mb-4" style="font-size: 40px;">Edit Address</h2>
 
-    <h2 class="fw-bold text-center mb-4" style="font-size: 40px;">Delivery Address</h2>
-
-    <div class="row">
-        <!-- Add New Address Form -->
+    <div class="row justify-content-center">
         <div class="col-md-6">
-            <div class="card shadow-lg rounded-4 p-4 mb-4">
-                <h4 class="mb-3">Add New Address</h4>
+            <div class="card shadow-lg rounded-4 p-4">
+                <h4 class="mb-3">Update Address</h4>
 
                 <!-- NAME -->
                 <div class="mb-3">
@@ -57,8 +55,8 @@
                         <i class="fa fa-arrow-left"></i> Back
                     </button>
 
-                    <button class="btn btn-danger px-4" @onclick="SaveAddress">
-                        <i class="fa fa-save"></i> Save Address
+                    <button class="btn btn-danger px-4" @onclick="UpdateAddress">
+                        <i class="fa fa-save"></i> Update
                     </button>
                 </div>
 
@@ -68,94 +66,46 @@
                         @Message
                     </div>
                 }
-
             </div>
         </div>
-
-        <!-- Saved Addresses -->
-        <div class="col-md-6">
-            <h4>Your Saved Addresses</h4>
-
-            @if (addresses == null)
-            {
-                <p>Loading addresses...</p>
-            }
-            else if (addresses.Count == 0)
-            {
-                <div class="alert alert-info mt-3">
-                    No saved addresses found.
-                </div>
-            }
-            else
-            {
-                @foreach (var ad in addresses)
-                {
-                    <div class="card p-3 mb-3 shadow-sm">
-                        <h5>@ad.Name</h5>
-                        <p>@ad.Mobile</p>
-                        <p>@ad.FullAddress, @ad.City, @ad.State - @ad.PinCode</p>
-
-                        <div class="d-flex justify-content-between mt-2">
-                            <button class="btn btn-dark" @onclick="(DeliverHere)">Deliver Here</button>
-                            <button class="btn btn-warning" @onclick="(() => EditAddress(ad.Id))">Edit</button>
-                            <button class="btn btn-danger" @onclick="(() => DeleteAddress(ad.Id))">Delete</button>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
     </div>
-
 </div>
 
 @code {
+    [Parameter] public int Id { get; set; }
     private Address AddressModel = new();
-    private List<Address> addresses = new();
     private string Message = "";
 
     protected override async Task OnInitializedAsync()
     {
-        // Load saved addresses for logged-in user
-        addresses = await Http.GetFromJsonAsync<List<Address>>($"/address/get-by-email/{LoginState.UserEmail}");
+        // Load address data by ID
+        AddressModel = await Http.GetFromJsonAsync<Address>($"/address/get/{Id}");
+
+        // Ensure the user can only edit their own address
+        if (AddressModel.UserEmail != LoginState.UserEmail)
+        {
+            Nav.NavigateTo("/");
+        }
     }
 
-    private async Task SaveAddress()
+    private async Task UpdateAddress()
     {
         // Attach logged-in user email automatically
         AddressModel.UserEmail = LoginState.UserEmail;
 
-        var response = await Http.PostAsJsonAsync("/address/add", AddressModel);
+        var response = await Http.PutAsJsonAsync("/address/update", AddressModel);
 
         if (response.IsSuccessStatusCode)
         {
-            Message = "✔ Address saved successfully!";
-            AddressModel = new Address(); // clear form
-            // Reload addresses
-            addresses = await Http.GetFromJsonAsync<List<Address>>($"/address/get-by-email/{LoginState.UserEmail}");
+            Message = "✔ Address updated successfully!";
+            await Task.Delay(1500);
+            Nav.NavigateTo("/save-address");
         }
         else
         {
-            Message = "❌ Could not save address. Try again.";
+            Message = "❌ Could not update address. Try again.";
         }
     }
 
-    private void GoBack() => Nav.NavigateTo("/");
-
-    private void DeliverHere()
-    {
-        // Go to checkout/order summary with selected address
-        Nav.NavigateTo($"/waiting");
-    }
-
-    private void EditAddress(int id)
-    {
-        Nav.NavigateTo($"/edit-address/{id}");
-    }
-
-    private async Task DeleteAddress(int id)
-    {
-        await Http.DeleteAsync($"/address/delete/{id}");
-        // Remove deleted address from local list
-        addresses = addresses.Where(a => a.Id != id).ToList();
-    }
+    private void GoBack() => Nav.NavigateTo("/save-address");
 }

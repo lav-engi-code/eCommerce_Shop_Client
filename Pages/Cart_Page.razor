@@ -1,77 +1,153 @@
 ﻿@page "/cart"
+@using eCommerce_Shop_Client.Services
 <PageTitle>Cart</PageTitle>
-
 
 @if (IsLoading)
 {
     <div style="margin-top:15%">
         <div class="loader-container">
             <div class="cube-loader"></div>
-            <br />
         </div>
-        <div class="text-center text-secondary fw-bold mt-4">Cart Loading</div>
+        <div class="text-center text-secondary fw-bold mt-4">Loading your cart…</div>
     </div>
 }
 else if (CartItems == null || CartItems.Count == 0)
 {
-    <div class="text-center mt-5">
+    <di style="min-height:100vh;" class="text-center mt-5">
         <h5 class="text-muted">Your cart is empty!</h5>
         <button class="btn btn-primary mt-3" @onclick="GoHome">Shop Now</button>
-    </div>
+    </di>
+    <Footer_Page />
+
 }
 else
 {
-    <div class="container">
-        @foreach (var item in CartItems)
-        {
-            <div class="product-list-item shadow-sm mb-3 d-flex p-2 align-items-center"
-                 style="border-radius:8px; border:1px solid #ddd;">
+    <div style="min-height:100vh;" class="container mt-4">
 
-                <img src="@FixBase64(item.Base64Img)"
-                     class="product-list-img"
-                     style="width:110px; height:90px; object-fit:contain;" />
+        <div class="row">
 
-                <div class="flex-grow-1 ms-3">
-                    <h5 class="fw-bold mb-1">@item.Name</h5>
-                    <p class="fw-semibold text-dark mb-1">₹@item.Price</p>
+            <!-- LEFT SIDE – CART ITEMS -->
+            <div class="col-lg-8">
 
-                    <div class="d-flex align-items-center gap-2">
-                        <button class="btn btn-sm btn-dark"
-                                @onclick="@(() => UpdateQty(item, -1))">
-                            −
-                        </button>
+                @foreach (var item in CartItems)
+                {
+                    <div class="card shadow-sm mb-3 p-3" style="border-radius:10px;">
 
-                        <span class="px-2 fw-bold">@item.Quantity</span>
+                        <div class="row">
 
-                        <button class="btn btn-sm btn-dark"
-                                @onclick="@(() => UpdateQty(item, +1))">
-                            +
-                        </button>
+                            <!-- Product Image -->
+                            <div class="col-4 col-md-3 d-flex align-items-center">
+                                <img src="@FixBase64(item.Base64Img)"
+                                     style="width:100%; height:120px; object-fit:contain;" />
+                            </div>
+
+                            <!-- Product Details -->
+                            <div class="col-8 col-md-6">
+                                <h5 class="fw-bold mb-1">@item.Name</h5>
+                                <p class="fw-semibold text-dark mb-1" style="font-size:18px;">
+                                    ₹@item.Price
+                                </p>
+
+                                <!-- Quantity control (Flipkart style) -->
+                                <div class="d-flex align-items-center mt-2">
+
+                                    <!-- Quantity control (Flipkart style) -->
+                                    <div class="d-flex align-items-center mt-2">
+
+                                        <!-- Minus button disabled when qty = 1 -->
+                                        <button class="btn btn-outline-dark btn-sm rounded-circle"
+                                                style="width:32px; height:32px;"
+                                                disabled="@(item.Quantity == 1)"
+                                                @onclick="@(() => UpdateQty(item, -1))">
+                                            −
+                                        </button>
+
+                                        <span class="fw-bold mx-3" style="font-size:17px;">
+                                            @item.Quantity
+                                        </span>
+
+                                        <!-- Plus button -->
+                                        <button class="btn btn-outline-dark btn-sm rounded-circle"
+                                                style="width:32px; height:32px;"
+                                                @onclick="@(() => UpdateQty(item, +1))">
+                                            +
+                                        </button>
+
+                                    </div>
+
+
+                                    <span class="fw-bold mx-3" style="font-size:17px;">
+                                        <span>Subtotal</span>
+                                        <span>₹@(item.Price* item.Quantity)</span>
+                                    </span>
+
+                                </div>
+
+                                <button class="btn btn-light border-0 text-danger mt-2 p-0"
+                                        title="Remove"
+                                        @onclick="@(() => RemoveItem(item.Id))"
+                                        style="font-size:20px; line-height:1;">
+                                    &times;
+                                </button>
+
+                            </div>
+
+                        </div>
+
                     </div>
+                }
+            </div>
+
+            <!-- RIGHT SIDE – PRICE SUMMARY -->
+            <div class="col-lg-4">
+
+                <div class="card shadow-sm p-3" style="border-radius:10px; position:sticky; top:90px;">
+
+                    <h5 class="fw-bold mb-3">PRICE DETAILS</h5>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total</span>
+                        <span>₹@Subtotal</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>GST (12%)</span>
+                        <span>₹@GstAmount</span>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-between fw-bold mb-3" style="font-size:18px;">
+                        <span>Total Amount</span>
+                        <span>₹@GrandTotal</span>
+                    </div>
+
+                    <button class="btn btn-warning fw-bold w-100 py-2"
+                            style="font-size:18px;"
+                            @onclick="Checkout">
+                        PLACE ORDER
+                    </button>
+
                 </div>
 
-                <button class="btn btn-danger btn-sm"
-                        @onclick="@(() => RemoveItem(item.Id))">
-                    Remove
-                </button>
             </div>
-        }
 
-        <div class="card p-3 shadow-sm mt-4">
-            <h4 class="fw-bold">Total: ₹@TotalAmount</h4>
-
-            <button class="btn btn-success mt-2 fw-bold px-3 py-2"
-                    @onclick="Checkout">
-                Checkout
-            </button>
         </div>
+
     </div>
+    <Footer_Page />
+
 }
 
 @code {
+    [Inject] CartState CartState { get; set; }
+
     private List<Cart>? CartItems;
     private bool IsLoading = true;
-    private decimal TotalAmount = 0;
+
+    private decimal Subtotal = 0;
+    private decimal GstAmount = 0;
+    private decimal GrandTotal = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -83,7 +159,8 @@ else
         IsLoading = true;
 
         CartItems = await Http.GetFromJsonAsync<List<Cart>>("cart/get");
-
+        int totalQty = CartItems.Sum(i => i.Quantity);
+        CartState.SetItems(totalQty);
         CalculateTotal();
 
         IsLoading = false;
@@ -91,36 +168,43 @@ else
 
     private void CalculateTotal()
     {
-        TotalAmount = CartItems?.Sum(i => i.Price * i.Quantity) ?? 0;
+        Subtotal = CartItems?.Sum(i => i.Price * i.Quantity) ?? 0;
+        GstAmount = Math.Round(Subtotal * 0.12m, 2);
+        GrandTotal = Subtotal + GstAmount;
     }
 
     private async Task UpdateQty(Cart item, int change)
     {
         var newQty = item.Quantity + change;
-
-        if (newQty < 1)
-            newQty = 1;
+        if (newQty < 1) newQty = 1;
 
         item.Quantity = newQty;
 
-        // Call updated PUT service
         await Http.PutAsync($"cart/update-qty/{item.Id}/{newQty}", null);
-
+        int totalQty = CartItems.Sum(i => i.Quantity);
+        CartState.SetItems(totalQty);
         CalculateTotal();
     }
 
     private async Task RemoveItem(int id)
     {
         await Http.DeleteAsync($"cart/remove/{id}");
-
         CartItems!.RemoveAll(i => i.Id == id);
-
+        int totalQty = CartItems.Sum(i => i.Quantity);
+        CartState.SetItems(totalQty);
         CalculateTotal();
     }
 
     private void Checkout()
     {
-        Nav.NavigateTo("/save-address");
+        if (LoginState.IsLoggedIn)
+        {
+            Nav.NavigateTo("/save-address");
+        }
+        else
+        {
+            Nav.NavigateTo("/login");
+        }
     }
 
     private void GoHome()
@@ -135,24 +219,19 @@ else
 
         base64 = base64.Trim();
 
-        // Remove any incorrect or duplicate prefixes
         string[] wrongPrefixes =
         {
-        "data : image/png;base64,",
-        "data:image/png;base64,",
-        "data:image/png;base64",
-        "data:image/PNG;base64,"
-    };
+            "data : image/png;base64,",
+            "data:image/png;base64,",
+            "data:image/png;base64",
+            "data:image/PNG;base64,"
+        };
 
         foreach (var p in wrongPrefixes)
         {
             base64 = base64.Replace(p, "", StringComparison.OrdinalIgnoreCase);
         }
 
-        base64 = base64.Trim();
-
-        // Always return correct PNG Data URI
-        return $"data:image/png;base64,{base64}";
+        return $"data:image/png;base64,{base64.Trim()}";
     }
-
 }
